@@ -315,5 +315,5 @@ public class NormainMain {
 	}
 }
 ```
-### [자세한 코드 보러가기](https://github.com/HaSeung2/musi/edit/master/README.md)
+### [자세한 코드 보러가기](https://github.com/HaSeung2/musi)
 
