@@ -1,7 +1,13 @@
 # musi
 >Music 프로젝트는 음악가와 일반유저를 따로 관리하여 음악가로 로그인한 유저는 음악을 등록,수정,삭제 할수 있으며 일반 유저는 음악 차트를 보거나 원하는 음악을 검색, 재생할 수 있도록 만들었다.
+또한 JDBC API를 사용하여 sql과 연결시켜 db에 정보들을 저장시켰다.
+---
 
-index 페이지(시작페이지)
+### ERD
+
+![erd](https://user-images.githubusercontent.com/108933977/178447764-04fef9a0-f4f4-42a8-85a9-4a1f0392ac4d.png)
+
+### index 페이지(시작페이지)
 ```java
 package view;
 
@@ -118,7 +124,7 @@ public class MusicianJoinView {
 }
 }
 ```
-휴대폰 문자 인증 API 코드
+### 휴대폰 문자 인증 API 코드
 ```java
 package dao;
 
@@ -156,3 +162,158 @@ public String phone(String musicianphone) {
     return numStr;
 }
 ```
+회원가입을 마치고 로그인을하게되면 일반회원은 일반유저 메인뷰로 보내주고 음악가회원은 음악가회원 메인뷰로 이동시켜준다.
+### 음악가 메인화면
+```java
+package view;
+
+import java.util.Scanner;
+
+import dao.MusicDAO;
+import dao.Session;
+
+public class MusicianMain {
+	public MusicianMain() {
+		Scanner sc = new Scanner(System.in);
+		MusicDAO mdao = new MusicDAO();
+		
+		while(true) {
+			System.out.println("-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=");
+			System.out.println("♥♡ Musi에 오신걸 환영합니다~~ ♡♥");
+			System.out.println("-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=");
+			
+			System.out.println("1. 음악 등록\n2. 음악 수정\n3. 회원 수정\n4. 로그아웃");
+			System.out.print("무엇을 하실 건가요 ? : ");
+			int choice = sc.nextInt();
+
+			if(choice == 4) {
+				System.out.println("안녕히 가세용 ~~"+"\n");
+				Session.put("login_id", null);
+				break;
+			}
+			switch (choice) {
+			case 1:
+				new AddMusicView();
+				break;
+			case 2:
+				System.out.println("\n"+"음악명"+"\t"+"가수"+"\t"+"작사가"+"\t"+"작곡가"+"\t"+"가사");
+				System.out.println("===========================");
+				System.out.println(mdao.getMyMusic());
+				System.out.println("===========================");
+				System.out.print("변경하실 음악의 이름을 써주세요 : ");
+				sc = new Scanner(System.in);
+				String music = sc.nextLine();
+				new ModifyMusic(music);
+				break;
+			case 3:
+				new ModifyMusician();
+				break;
+			}
+		}
+	}
+}
+```
+### 일반회원 메인화면
+```java
+package view;
+
+import java.util.Scanner;
+
+import dao.MusicDAO;
+import dao.PlayDAO;
+import dao.PlayListDAO;
+import dao.Session;
+
+public class NormainMain {
+	public NormainMain() {
+		Scanner sc = new Scanner(System.in);
+		MusicDAO mdao = new MusicDAO();
+		PlayListDAO pdao = new PlayListDAO();
+		PlayDAO plo = new PlayDAO();
+		
+		while(true) {
+		System.out.println("===========================================");
+		System.out.println("★☆★☆★☆★☆뮤지에 오신걸 환영합니다★☆★☆★☆★☆★☆");
+		System.out.println("===========================================");
+		
+		System.out.println("1. 뮤지 차트\n2. 노래 검색\n3. 내 플레이 리스트\n4. 회원정보 수정\n5. 로그아웃");
+		System.out.print("원하시는 번호를 적어주세요 : ");
+		int choice = sc.nextInt();
+		
+		if(choice == 5) {
+			Session.put("login_id", null);
+			System.out.println("다음에 또 와주세요~!");
+		}
+		switch (choice) {
+		case 1:
+			System.out.println("============뮤지 차트 ! !===========");
+			System.out.println("음악명"+"\t"+"가수"+"\t"+"작사가"+"\t"+"작곡가"+"\t"+"노래가사"+"\t"+"\t"+"좋아요");
+			System.out.println(mdao.getList());
+			System.out.println("=================================");
+			break;
+		case 2:
+			System.out.print("어떤 노래를 검색 할까요 ?  : ");
+			sc = new Scanner(System.in);
+			String songs = sc.nextLine();
+			System.out.println("========"+songs+"(으)로 검색한 결과 입니다.=========");
+			System.out.println("음악명"+"\t"+"가수"+"\t"+"작사가"+"\t"+"작곡가"+"\t"+"노래가사"+"\t"+"\t"+"좋아요");
+			System.out.println(mdao.searchSong(songs));
+			if(mdao.searchSong(songs) == "") {
+				System.out.println("검색된 결과가 없습니다.");
+				break;
+			}
+			System.out.print("관심있으신 노래명을 적어주세요 : ");
+			sc = new Scanner(System.in);
+			String attentisong = sc.nextLine();
+			new AttentionMusic(attentisong);
+			break;
+		case 3:
+			if(!(plo.getPlay() == "")) {
+				String re = plo.getPlay();
+				System.out.println("현재 "+re+"를(을) 재생중입니다~~");
+			}
+			System.out.println("===========내 플레이 리스트===========");
+			System.out.println("음악명"+"\t"+"가수");
+			System.out.println(pdao.myPlayList());
+			System.out.println("==================================");
+			System.out.println("1. 재생하기\n2. 플레이리스트에서 삭제하기\n3. 돌아가기");
+			System.out.print("무엇을 하시겠습니까 ? : ");
+			int choices = sc.nextInt();
+			if(choices == 1) {
+				System.out.print("재생하실 음악 : ");
+				sc = new Scanner(System.in);
+				String playsong = sc.nextLine();
+				if(!(plo.selectplay() == "")) {
+					System.out.println("듣고 계신 노래를 중지하고 이 노래를 재생하시겠습니까 ? ");
+					System.out.print("1. 수락  2. 거절 : ");
+					int ch = sc.nextInt();
+					if(ch == 1) {
+						if(plo.updateplay(playsong)) {
+							System.out.println(playsong+"(를)을 재생합니다~!");
+						}
+					}
+					else {
+						System.out.println("듣고 계신 노래를 다 들으신 후에 다시 와주세용♥");
+						break;
+					}
+				}
+			if(plo.selectplay() == "") {
+				if(plo.addPlay(playsong)) {
+					System.out.println(playsong+"(를)을 재생중입니다~~");
+				}
+				else {
+					System.out.println("재생하는데 오류가 발생하였습니다. 다시 시도해 주세요.");
+				}
+			}
+		}
+			break;
+		case 4:
+			new ModifyUser();
+			break;
+		}
+	}
+	}
+}
+```
+### [자세한 코드 보러가기](https://github.com/HaSeung2/musi/edit/master/README.md)
+
